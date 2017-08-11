@@ -1,0 +1,11 @@
+{
+	"name": "folk-stopthat",
+	"version": "0.1.3",
+	"title": "Stop That, Silly Robot!",
+	"description": "Deactivates personal roboports while you are travelling in a vehicle, at speeds above the configured threshold.",
+	"author": "folk",
+	"contact": "",
+	"homepage": "https://forums.factorio.com/viewtopic.php?f=94&t=45554",
+	"factorio_version": "0.15",
+	"license": "CC-BY-NC 4.0"
+}
