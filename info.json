@@ -1,6 +1,6 @@
 {
 	"name": "folk-stopthat",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"title": "Stop That, Silly Robot!",
 	"description": "Deactivates personal roboports while you are travelling in a vehicle, at speeds above the configured threshold.",
 	"author": "folk",
