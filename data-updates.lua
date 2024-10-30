@@ -13,14 +13,12 @@ do
 	-- fake items "solar-panel-equipment". But since they do, we need to create fake
 	-- "roboport-equipment"
 	local add = {}
-	local hidden = {"hidden"}
-	local icon = "__folk-stopthat__/icon.png"
 
 	for name, eq in pairs(data.raw["roboport-equipment"]) do
 		if type(eq.take_result) == "string" then
 			local cc = table.deepcopy(eq)
 			cc.name = d._NAME:format(name)
-			cc.localised_name = {"lulzstopthat.robotbbq", {"equipment-name." .. eq.name}}
+			cc.localised_name = { "lulzstopthat.robotbbq", { "equipment-name." .. eq.name } }
 			cc.sprite = sprite
 			cc.energy_consumption = "0W"
 			cc.robot_limit = 0
@@ -30,8 +28,7 @@ do
 
 			local it = table.deepcopy(data.raw.item[cc.take_result])
 			it.name = cc.name
-			it.flags = hidden
-			it.icon = icon -- just in case we see it as a signal or something
+			it.hidden = true
 			it.placed_as_equipment_result = name
 
 			table.insert(add, cc)

@@ -30,7 +30,7 @@ script.on_event(defines.events.on_research_finished, function() for k in pairs(d
 local fakeItems = setmetatable({}, {
 	__index = function(self, k)
 		local v = d._NAME:format(k)
-		if not game.equipment_prototypes[v] then v = false end
+		if not prototypes.equipment[v] then v = false end
 		rawset(self, k, v)
 		return v
 	end
@@ -73,15 +73,15 @@ local function tick(event)
 	if event.tick % 60 == 0 then
 		for id, p in pairs(game.players) do
 			if p.valid and p.connected and p.character and p.character.grid then
-				if global.state[id] then
+				if storage.state[id] then
 					if not p.vehicle or (getSpeed(p.vehicle) < (disableAt[id] + 0.05) and not simply[id]) or getSpeed(p.vehicle) == 0 then
 						restore(p.character.grid)
-						global.state[id] = nil
+						storage.state[id] = nil
 					end
 				else
 					if p.vehicle and (getSpeed(p.vehicle) > disableAt[id] or simply[id]) and getSpeed(p.vehicle) ~= 0 then
 						nuke(p.character.grid)
-						global.state[id] = true
+						storage.state[id] = true
 					end
 				end
 			end
@@ -95,15 +95,15 @@ local function driving(event)
 	if not event or not event.player_index or not simply[event.player_index] then return end
 	local p = game.players[event.player_index]
 	if p and p.valid and p.character and p.character.grid then
-		if global.state[event.player_index] then
+		if storage.state[event.player_index] then
 			if not p.vehicle then
 				restore(p.character.grid)
-				global.state[event.player_index] = nil
+				storage.state[event.player_index] = nil
 			end
 		else
 			if p.vehicle then
 				nuke(p.character.grid)
-				global.state[event.player_index] = true
+				storage.state[event.player_index] = true
 			end
 		end
 	end
@@ -112,7 +112,5 @@ script.on_event(defines.events.on_player_driving_changed_state, driving)
 
 script.on_init(function()
 	-- key: player index, value: boolean
-	if not global.state then global.state = {} end
+	if not storage.state then storage.state = {} end
 end)
-
-
