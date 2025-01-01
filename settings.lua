@@ -1,5 +1,11 @@
 local d = require("defines")
 _G.data:extend({
+	-- {
+	-- 	type = "bool-setting",
+	-- 	name = d.sAlwaysKey,
+	-- 	setting_type = "runtime-per-user",
+	-- 	default_value = false,
+	-- },
 	{
 		type = "bool-setting",
 		name = d.sSimplyKey,
@@ -13,5 +19,5 @@ _G.data:extend({
 		default_value = 130,
 		minimum_value = 10,
 		maximum_value = 900,
-	}
+	},
 })

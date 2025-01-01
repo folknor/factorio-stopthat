@@ -1,13 +1,25 @@
 local d = require("defines")
 local _robo = "roboport-equipment"
 
+---@class storage
+---@field state { [number]: boolean }
+
+-- local always = setmetatable({}, {
+-- 	__index = function(self, id)
+-- 		local v = settings.get_player_settings(game.players[id])[d.sAlwaysKey].value
+-- 		rawset(self, id, v)
+-- 		return v
+-- 	end,
+-- })
+
 local simply = setmetatable({}, {
 	__index = function(self, id)
 		local v = settings.get_player_settings(game.players[id])[d.sSimplyKey].value
 		rawset(self, id, v)
 		return v
-	end
+	end,
 })
+
 local disableAt = setmetatable({}, {
 	__index = function(self, id)
 		local percent = (settings.get_player_settings(game.players[id])[d.sSpeedKey].value / 100)
@@ -15,40 +27,49 @@ local disableAt = setmetatable({}, {
 		local v = robotSpeed * percent
 		rawset(self, id, v)
 		return v
-	end
+	end,
 })
+
 script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
+	---@cast event OnRuntimeModSettingChanged
 	if not event or not event.setting then return end
 	if event.setting == d.sSimplyKey then
 		simply[event.player_index] = nil
 	elseif event.setting == d.sSpeedKey then
 		disableAt[event.player_index] = nil
+		-- elseif event.setting == d.sAlwaysKey then
+		-- 	always[event.player_index] = nil
 	end
 end)
 script.on_event(defines.events.on_research_finished, function() for k in pairs(disableAt) do disableAt[k] = nil end end)
 
 local fakeItems = setmetatable({}, {
 	__index = function(self, k)
+		---@type string|boolean
 		local v = d._NAME:format(k)
 		if not prototypes.equipment[v] then v = false end
 		rawset(self, k, v)
 		return v
-	end
+	end,
 })
 
 -- Do the table-churn dance \o/ \o/ \o/
 -- I don't know how to dance.
+---@param g LuaEquipmentGrid
+---@param old LuaEquipment
+---@param new string
 local function swapIn(g, old, new)
 	if not new then return end
 	local pos = old.position
-	g.take({ position = pos })
+	g.take({ position = pos, })
 	local putted = g.put({
 		name = new,
-		position = pos
+		position = pos,
 	})
 	if putted then putted.energy = putted.max_energy end
 end
 
+---@param g LuaEquipmentGrid
 local function restore(g)
 	for _, eq in next, g.equipment do
 		if eq.type == _robo and eq.prototype.order == d._ORDER then
@@ -57,6 +78,7 @@ local function restore(g)
 	end
 end
 
+---@param g LuaEquipmentGrid
 local function nuke(g)
 	for _, eq in next, g.equipment do
 		if eq.type == _robo and eq.prototype.order ~= d._ORDER then
@@ -65,33 +87,42 @@ local function nuke(g)
 	end
 end
 
-local function getSpeed(e) return e.type == "car" and e.speed or e.train.speed end
+---@param e LuaEntity
+---@return number
+local function getSpeed(e) return (e.train and e.train.speed) or e.speed end
 
 -- Yes, yes, if we have the simply-setting toggled,
 -- things are disabled+enabled immediately upon entering a vehicle. I don't want to fix it.
-local function tick(event)
-	if event.tick % 60 == 0 then
-		for id, p in pairs(game.players) do
-			if p.valid and p.connected and p.character and p.character.grid then
-				if storage.state[id] then
-					if not p.vehicle or (getSpeed(p.vehicle) < (disableAt[id] + 0.05) and not simply[id]) or getSpeed(p.vehicle) == 0 then
-						restore(p.character.grid)
-						storage.state[id] = nil
-					end
-				else
-					if p.vehicle and (getSpeed(p.vehicle) > disableAt[id] or simply[id]) and getSpeed(p.vehicle) ~= 0 then
-						nuke(p.character.grid)
-						storage.state[id] = true
-					end
+local function tick()
+	for id, p in pairs(game.players) do
+		if p.valid and p.connected and p.character and p.character.grid then
+			if storage.state[id] then
+				if
+					not p.vehicle or
+					(getSpeed(p.vehicle) < (disableAt[id] + 0.05) and not simply[id]) or
+					getSpeed(p.vehicle) == 0
+				then
+					restore(p.character.grid)
+					storage.state[id] = nil
+				end
+			else
+				if
+					p.vehicle and
+					(getSpeed(p.vehicle) > disableAt[id] or simply[id]) and
+					getSpeed(p.vehicle) ~= 0
+				then
+					nuke(p.character.grid)
+					storage.state[id] = true
 				end
 			end
 		end
 	end
 end
-script.on_event(defines.events.on_tick, tick)
+script.on_nth_tick(60, tick)
 
--- When the vehicle is mined, we restore the roboports in ontick
+-- When the vehicle is mined or destroyed, we restore the roboports in ontick
 local function driving(event)
+	---@cast event OnPlayerDrivingChangedState
 	if not event or not event.player_index or not simply[event.player_index] then return end
 	local p = game.players[event.player_index]
 	if p and p.valid and p.character and p.character.grid then
@@ -112,5 +143,8 @@ script.on_event(defines.events.on_player_driving_changed_state, driving)
 
 script.on_init(function()
 	-- key: player index, value: boolean
-	if not storage.state then storage.state = {} end
+	if not storage.state then
+		---@type { [number]: boolean }
+		storage.state = {}
+	end
 end)
