@@ -61,12 +61,16 @@ local fakeItems = setmetatable({}, {
 local function swapIn(g, old, new)
 	if not new then return end
 	local pos = old.position
-	g.take({ position = pos, })
-	local putted = g.put({
-		name = new,
-		position = pos,
-	})
-	if putted then putted.energy = putted.max_energy end
+	local q = old.quality
+	local removed = g.take({ position = pos, })
+	if removed then
+		local putted = g.put({
+			name = new,
+			position = pos,
+			quality = q,
+		})
+		if putted then putted.energy = putted.max_energy end
+	end
 end
 
 ---@param g LuaEquipmentGrid
